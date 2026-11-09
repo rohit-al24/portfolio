@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 const SECTIONS = [
   { id: "home", label: "Home" },
+  { id: "skills", label: "Skills" },
   { id: "about", label: "About" },
   { id: "expertise", label: "Expertise" },
   { id: "projects", label: "Projects" },
@@ -19,7 +20,9 @@ export function scrollToSection(id: string) {
     window.scrollTo({ top: 0, behavior: "smooth" });
     return;
   }
-  const el = document.getElementById(id);
+  const el =
+    document.getElementById(id) ||
+    (id === "skills" ? document.getElementById("universe") : null);
   if (el) {
     el.scrollIntoView({ behavior: "smooth", block: "start" });
   }

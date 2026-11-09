@@ -284,6 +284,12 @@ export const projects: Project[] = [
     demo: null,
     screenshots: [
       {
+        title: "IQAC Institutional Engineering Team",
+        caption: "Core system architects, software developers, and IQAC institutional leadership behind the IDCS ecosystem.",
+        filename: "engineeringteam.jpeg",
+        image: "/assets/idcs/engineeringteam.jpeg",
+      },
+      {
         title: "Main Institutional Dashboard",
         caption: "Centralized overview of institutional metrics, department curriculum, announcements, and administrative workflows.",
         filename: "dashboard.png",
@@ -306,12 +312,6 @@ export const projects: Project[] = [
         caption: "Edge traffic monitoring, zero-inbound Cloudflare Tunnel proxying 3.1M+ institutional requests, and SSL encryption.",
         filename: "screen4.png",
         image: "/assets/idcs/screen4.png",
-      },
-      {
-        title: "IQAC Institutional Engineering Team",
-        caption: "Core system architects, software developers, and IQAC institutional leadership behind the IDCS ecosystem.",
-        filename: "engineeringteam.jpeg",
-        image: "/assets/idcs/engineeringteam.jpeg",
       },
     ],
     related: ["medora", "secure-vision"],

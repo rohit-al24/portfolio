@@ -21,6 +21,27 @@ export default function App() {
   const location = useLocation();
   const [showSplash, setShowSplash] = useState(true);
 
+  // Ensure desktop enters full screen on initial user click anywhere on site
+  useEffect(() => {
+    const handleFirstClick = () => {
+      if (window.innerWidth >= 1024 && document.fullscreenEnabled && !document.fullscreenElement) {
+        try {
+          const el = document.documentElement;
+          if (el.requestFullscreen) {
+            el.requestFullscreen().catch(() => {});
+          } else if ((el as any).webkitRequestFullscreen) {
+            (el as any).webkitRequestFullscreen();
+          }
+        } catch {
+          // ignore
+        }
+      }
+    };
+
+    window.addEventListener("click", handleFirstClick, { once: true });
+    return () => window.removeEventListener("click", handleFirstClick);
+  }, []);
+
   return (
     <div className="relative min-h-screen bg-obsidian text-cream">
       {/* Full-screen Loading Splash Screen */}

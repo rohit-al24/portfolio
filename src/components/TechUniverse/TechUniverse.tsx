@@ -21,15 +21,18 @@ import {
   technologies,
   techCategories,
   type Tech,
+  type TechCategory,
 } from "@/data/technologies";
 
-const headlineOffset = 180;
 const starCycleMs = 5200;
 
 export function TechUniverse() {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const mouseRef = useRef<{ x: number; y: number } | null>(null);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
   const reduced = useReducedMotion();
   const [selected, setSelected] = useState<Tech | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<TechCategory | null>(null);
   const [activeTechId, setActiveTechId] = useState("react");
   const [pausedIconId, setPausedIconId] = useState<string | null>(null);
   const [balls, setBalls] = useState<IconBall[]>(() =>
@@ -46,8 +49,23 @@ export function TechUniverse() {
     })
   );
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    mouseRef.current = { x, y };
+    setMousePos({ x, y });
+  };
+
+  const handleMouseLeave = () => {
+    mouseRef.current = null;
+    setMousePos(null);
+  };
+
   useEffect(() => {
-    const cycle = ["react", "python", "nodejs", "typescript", "python", "react"];
+    const cycle = ["react", "python", "nodejs", "typescript", "django", "linux"];
     let index = 0;
 
     const interval = window.setInterval(() => {
@@ -79,14 +97,56 @@ export function TechUniverse() {
           ball.x += ball.vx * frameDelta;
           ball.y += ball.vy * frameDelta;
 
-          if (ball.x <= 4 || ball.x >= 96) {
+          // Outer bounding box collision
+          if (ball.x <= 5 || ball.x >= 95) {
             ball.vx *= -1;
-            ball.x = Math.max(4, Math.min(96, ball.x));
+            ball.x = Math.max(5, Math.min(95, ball.x));
           }
 
-          if (ball.y <= 8 || ball.y >= 92) {
+          if (ball.y <= 10 || ball.y >= 90) {
             ball.vy *= -1;
-            ball.y = Math.max(8, Math.min(92, ball.y));
+            ball.y = Math.max(10, Math.min(90, ball.y));
+          }
+
+          // Headline central exclusion zone (elliptical: cx=50, cy=50, rx=26, ry=16)
+          // Repels icons gracefully so they orbit around the title without covering text
+          const dx = (ball.x - 50) / 26;
+          const dy = (ball.y - 50) / 16;
+          const distSq = dx * dx + dy * dy;
+
+          if (distSq < 1.0) {
+            const angle = Math.atan2(ball.y - 50, ball.x - 50);
+            const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy) || 0.05;
+            ball.vx = Math.cos(angle) * speed;
+            ball.vy = Math.sin(angle) * speed;
+            ball.x = 50 + Math.cos(angle) * 26.5;
+            ball.y = 50 + Math.sin(angle) * 16.5;
+          }
+
+          // Interactive cursor gravity & gentle repulsion
+          const m = mouseRef.current;
+          if (m) {
+            const dmx = ball.x - m.x;
+            const dmy = ball.y - m.y;
+            const distSqMouse = dmx * dmx + dmy * dmy;
+            if (distSqMouse < 70 && distSqMouse > 0.04) {
+              const dist = Math.sqrt(distSqMouse);
+              const push = ((8.4 - dist) / 8.4) * 0.038;
+              ball.vx += (dmx / dist) * push;
+              ball.vy += (dmy / dist) * push;
+            }
+          }
+
+          // Velocity damping to keep cosmic motion smooth and natural
+          ball.vx *= 0.994;
+          ball.vy *= 0.994;
+
+          // Maintain minimum baseline speed
+          const curSpeed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+          if (curSpeed < 0.03) {
+            const factor = 0.035 / (curSpeed || 0.01);
+            ball.vx *= factor;
+            ball.vy *= factor;
           }
         }
 
@@ -114,9 +174,13 @@ export function TechUniverse() {
   return (
     <section
       ref={sectionRef}
-      id="universe"
+      id="skills"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       className="relative min-h-[110vh] overflow-hidden bg-obsidian"
     >
+      <span id="universe" className="absolute -top-24 pointer-events-none" />
+
       {/* Background (parallax) */}
       <motion.div
         className="absolute inset-0"
@@ -124,6 +188,21 @@ export function TechUniverse() {
       >
         <GalaxyBackground />
       </motion.div>
+
+      {/* Interactive cursor glow follower */}
+      {mousePos && (
+        <div
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl opacity-25 transition-opacity duration-300 z-10"
+          style={{
+            left: `${mousePos.x}%`,
+            top: `${mousePos.y}%`,
+            width: "280px",
+            height: "280px",
+            background:
+              "radial-gradient(circle, rgba(250,59,110,0.5) 0%, rgba(192,38,85,0.2) 40%, transparent 70%)",
+          }}
+        />
+      )}
 
       <div className="pointer-events-none absolute inset-0 z-10" aria-hidden="true">
         <div
@@ -137,33 +216,69 @@ export function TechUniverse() {
         />
       </div>
 
-      {/* Heading */}
-      <div className="container-x relative z-0 pt-28 md:pt-36" style={{ marginTop: `${headlineOffset}px` }}>
+      {/* Central Protected Headline Card */}
+      <div className="container-x relative z-30 flex min-h-[105vh] items-center justify-center py-24 pointer-events-none">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="mx-auto flex max-w-5xl flex-col items-center justify-center text-center"
+          className="pointer-events-auto mx-auto flex max-w-4xl flex-col items-center justify-center text-center rounded-3xl border border-white/10 bg-[#090708]/75 px-6 py-8 md:px-12 md:py-10 backdrop-blur-xl shadow-[0_0_60px_rgba(0,0,0,0.85)]"
         >
           <div className="flex items-center justify-center gap-3">
             <span className="h-px w-8 bg-maroon-bright/60" aria-hidden="true" />
-            <span className="eyebrow">Technology Universe</span>
+            <span className="eyebrow">Skills & Technologies</span>
             <span className="h-px w-8 bg-maroon-bright/60" aria-hidden="true" />
           </div>
-          <h2 className="mt-5 text-center font-display text-3xl font-extrabold tracking-tight text-cream sm:text-5xl md:text-6xl">
+
+          <h2 className="mt-4 text-center font-display text-3xl font-extrabold tracking-tight text-cream sm:text-5xl md:text-6xl">
             MY TECHNOLOGY{" "}
             <span className="text-gradient-solid">UNIVERSE</span>
           </h2>
-          <p className="mt-4 max-w-2xl text-center font-serif text-lg italic text-muted sm:text-xl">
+
+          <p className="mt-3 max-w-xl text-center font-serif text-base italic text-muted sm:text-lg">
             A Universe of Technologies. Infinite Possibilities.
+          </p>
+
+          {/* Interactive Category Filter Pills */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${selectedCategory === null
+                  ? "border border-maroon-bright bg-maroon-bright text-white shadow-glow-sm"
+                  : "border border-white/10 bg-white/5 text-muted hover:border-white/20 hover:text-white"
+                }`}
+            >
+              All Skills ({technologies.length})
+            </button>
+            {techCategories.map((cat) => {
+              const count = technologies.filter((t) => t.category === cat).length;
+              return (
+                <button
+                  key={cat}
+                  onClick={() =>
+                    setSelectedCategory(selectedCategory === cat ? null : cat)
+                  }
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${selectedCategory === cat
+                      ? "border border-maroon-bright bg-maroon-bright text-white shadow-glow-sm"
+                      : "border border-white/10 bg-white/5 text-muted hover:border-white/20 hover:text-white"
+                    }`}
+                >
+                  {cat} ({count})
+                </button>
+              );
+            })}
+          </div>
+
+          <p className="mt-4 text-[11px] uppercase tracking-wider text-muted/60">
+            Click any orbiting tech node to view architecture & experience details
           </p>
         </motion.div>
       </div>
 
       {/* Floating icons (parallax) */}
       <motion.div
-        className="absolute inset-0 z-20"
+        className="absolute inset-0 z-20 pointer-events-auto"
         style={reduced ? undefined : { y: fgY }}
       >
         {technologies.map((tech) => {
@@ -183,8 +298,13 @@ export function TechUniverse() {
               isActive={tech.id === activeTechId}
               position={{ x: ball.x, y: ball.y }}
               isPaused={pausedIconId === tech.id}
+              isFilteredOut={Boolean(
+                selectedCategory && tech.category !== selectedCategory
+              )}
               onHoverStart={() => setPausedIconId(tech.id)}
-              onHoverEnd={() => setPausedIconId((current) => (current === tech.id ? null : current))}
+              onHoverEnd={() =>
+                setPausedIconId((current) => (current === tech.id ? null : current))
+              }
             />
           );
         })}
@@ -192,7 +312,7 @@ export function TechUniverse() {
 
       {/* Compact mobile list */}
       <div className="container-x relative z-20 pb-24 md:hidden">
-        <div className="glass mt-[52vh] space-y-5 rounded-2xl p-5">
+        <div className="glass mt-8 space-y-5 rounded-2xl p-5">
           {techCategories.map((category) => (
             <div key={category}>
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-maroon-bright">
