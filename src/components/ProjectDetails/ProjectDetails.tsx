@@ -1,17 +1,23 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
   ArrowUpRight,
   CheckCircle2,
-  ExternalLink,
-  Github,
+  ChevronLeft,
+  ChevronRight,
+  Cpu,
+  Database,
+  Layers,
   Lightbulb,
   ListChecks,
+  Network,
+  Server,
   Target,
+  Terminal,
   User,
-  Wrench,
+  Users,
 } from "lucide-react";
 import { ProjectCover, ScreenshotArt } from "@/components/ui/ProjectCover";
 import { Lightbox } from "@/components/ui/Lightbox";
@@ -53,292 +59,668 @@ function InfoBlock({
 
 export function ProjectDetails({ project }: { project: Project }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const sliderRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const related = getRelatedProjects(project);
 
-  const backToProjects = () => {
-    navigate("/", { state: { scrollTo: "projects" } });
+  // Auto-slideshow loop: smoothly cycles slides every 3.8s unless paused or lightbox is active
+  useEffect(() => {
+    if (isPaused || lightboxIndex !== null) return;
+    if (!project.screenshots || project.screenshots.length <= 1) return;
+
+    const interval = setInterval(() => {
+      if (!sliderRef.current) return;
+      const container = sliderRef.current;
+      const slideWidth = (container.firstElementChild?.clientWidth ?? 420) + 20;
+      const maxScroll = container.scrollWidth - container.clientWidth;
+
+      // Wrap around when at the end
+      if (container.scrollLeft >= maxScroll - 20) {
+        container.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        container.scrollBy({ left: slideWidth, behavior: "smooth" });
+      }
+    }, 3800);
+
+    return () => clearInterval(interval);
+  }, [isPaused, lightboxIndex, project.screenshots]);
+
+  // Sync activeSlide index with scroll position
+  useEffect(() => {
+    const container = sliderRef.current;
+    if (!container) return;
+
+    const onScroll = () => {
+      const slideWidth = (container.firstElementChild?.clientWidth ?? 420) + 20;
+      const index = Math.round(container.scrollLeft / slideWidth);
+      setActiveSlide(Math.min(Math.max(index, 0), (project.screenshots?.length ?? 1) - 1));
+    };
+
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => container.removeEventListener("scroll", onScroll);
+  }, [project.screenshots]);
+
+  const scrollToSlide = (index: number) => {
+    if (!sliderRef.current) return;
+    const container = sliderRef.current;
+    const slideWidth = (container.firstElementChild?.clientWidth ?? 420) + 20;
+    container.scrollTo({
+      left: index * slideWidth,
+      behavior: "smooth",
+    });
   };
 
-  return (
-    <article className="relative pt-28 md:pt-36">
-      {/* Ambient lighting */}
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-[520px]"
-        style={{
-          background: `radial-gradient(ellipse 60% 55% at 50% 0%, ${project.accent}26, transparent 70%)`,
-        }}
-        aria-hidden="true"
-      />
+  const scrollSlider = (direction: "left" | "right") => {
+      if (!sliderRef.current) return;
+      const container = sliderRef.current;
+      const slideWidth = (container.firstElementChild?.clientWidth ?? 420) + 20;
+      const maxScroll = container.scrollWidth - container.clientWidth;
 
-      <div className="container-x relative">
-        {/* Back navigation */}
-        <button
-          onClick={backToProjects}
-          className="group inline-flex items-center gap-2 text-sm font-medium text-muted transition hover:text-cream"
-        >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-          Back to projects
-        </button>
+      if (direction === "right") {
+        if (container.scrollLeft >= maxScroll - 20) {
+          container.scrollTo({ left: 0, behavior: "smooth" });
+        } else {
+          container.scrollBy({ left: slideWidth, behavior: "smooth" });
+        }
+      } else {
+        if (container.scrollLeft <= 20) {
+          container.scrollTo({ left: maxScroll, behavior: "smooth" });
+        } else {
+          container.scrollBy({ left: -slideWidth, behavior: "smooth" });
+        }
+      }
+    };
 
-        {/* Header */}
-        <motion.header
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mt-6 grid gap-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-end"
-        >
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="font-display text-sm font-bold text-maroon-bright">
-                {project.number}
-              </span>
-              <span className="h-px w-8 bg-line" aria-hidden="true" />
-              <span className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">
-                {project.category}
-              </span>
-              <span className="rounded-full border border-maroon/40 bg-maroon/10 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-cream/90">
-                {project.status}
-              </span>
+    const backToProjects = () => {
+      navigate("/", { state: { scrollTo: "projects" } });
+    };
+
+    const isIdcs = project.id === "idcs";
+
+    return (
+      <article className="relative pt-28 md:pt-36">
+        {/* Ambient lighting */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-[520px]"
+          style={{
+            background: `radial-gradient(ellipse 60% 55% at 50% 0%, ${project.accent}26, transparent 70%)`,
+          }}
+          aria-hidden="true"
+        />
+
+        <div className="container-x relative">
+          {/* Back navigation */}
+          <button
+            onClick={backToProjects}
+            className="group inline-flex items-center gap-2 text-sm font-medium text-muted transition hover:text-cream"
+          >
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+            Back to projects
+          </button>
+
+          {/* Header */}
+          <motion.header
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mt-6 grid gap-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-end"
+          >
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="font-display text-sm font-bold text-maroon-bright">
+                  {project.number}
+                </span>
+                <span className="h-px w-8 bg-line" aria-hidden="true" />
+                <span className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">
+                  {project.category}
+                </span>
+                <span className="rounded-full border border-maroon/40 bg-maroon/10 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-cream/90">
+                  {project.status}
+                </span>
+              </div>
+              <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight text-cream sm:text-5xl md:text-6xl">
+                {project.title}
+              </h1>
+              {project.subtitle && (
+                <p className="mt-2 text-lg sm:text-xl font-medium text-maroon-bright">
+                  {project.subtitle}
+                </p>
+              )}
+              <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
+                {project.shortDescription}
+              </p>
             </div>
-            <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight text-cream sm:text-5xl md:text-6xl">
-              {project.title}
-            </h1>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
-              {project.shortDescription}
-            </p>
-          </div>
 
-          <div className="flex flex-wrap gap-3 lg:justify-end">
-            {project.github ? (
-              <a
-                href={project.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-cream transition hover:border-maroon-bright/60 hover:bg-card-elevated/60"
+            <div className="flex flex-wrap gap-3 lg:justify-end">
+              {project.organization && (
+                <div className="rounded-2xl border border-line bg-card/60 px-5 py-3 text-right">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">Organization</span>
+                  <p className="font-display text-sm font-bold text-cream">{project.organization}</p>
+                </div>
+              )}
+            </div>
+          </motion.header>
+
+          {/* Cover with Institutional Logos */}
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.15 }}
+            className="mt-10 overflow-hidden rounded-3xl border border-line"
+          >
+            <ProjectCover project={project} className="aspect-[16/9] w-full" />
+          </motion.div>
+
+          {/* IDCS Specific Architectural Deep Dive */}
+          {isIdcs ? (
+            <div className="mt-14 space-y-16">
+              {/* Quick Metadata Bar */}
+              <div className="grid grid-cols-2 gap-4 rounded-2xl border border-line bg-card/40 p-6 sm:grid-cols-4">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">Core Architect</span>
+                  <p className="mt-1 font-display text-sm font-bold text-cream">{project.coreArchitect}</p>
+                </div>
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">System Role</span>
+                  <p className="mt-1 font-display text-sm font-bold text-cream">System Designer & Technical Lead</p>
+                </div>
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">Project Type</span>
+                  <p className="mt-1 font-display text-sm font-bold text-cream">{project.projectType}</p>
+                </div>
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">Architecture</span>
+                  <p className="mt-1 font-display text-sm font-bold text-cream">{project.architectureType}</p>
+                </div>
+              </div>
+
+              {/* 01. Project Overview & Objectives */}
+              <section className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-maroon/20 font-mono text-xs font-bold text-maroon-bright">01</span>
+                  <h2 className="font-display text-2xl font-bold text-cream">Project Overview & Objectives</h2>
+                </div>
+                <p className="text-base leading-relaxed text-muted sm:text-lg">
+                  {project.overview}
+                </p>
+                {project.objectives && (
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {project.objectives.map((obj, i) => (
+                      <div key={i} className="glass flex items-start gap-3 rounded-xl p-4">
+                        <Target className="mt-0.5 h-4 w-4 shrink-0 text-maroon-bright" />
+                        <span className="text-sm text-[#d0c6cd]">{obj}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* 02. Institutional Ecosystem */}
+              <section className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-maroon/20 font-mono text-xs font-bold text-maroon-bright">02</span>
+                  <h2 className="font-display text-2xl font-bold text-cream">Institutional Ecosystem</h2>
+                </div>
+                <p className="text-base text-muted">
+                  IDCS is designed to support multiple institutions within the KR Institutions ecosystem, following a multi-institutional tenant approach that allows each campus to operate within a unified ecosystem while maintaining strict data isolation.
+                </p>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {project.institutions?.map((inst) => (
+                    <div key={inst.code} className="glass rounded-2xl p-6 border-l-4 border-l-maroon-bright">
+                      <span className="font-mono text-xs font-bold tracking-widest text-maroon-bright">{inst.code}</span>
+                      <h3 className="mt-2 font-display text-base font-bold text-cream">{inst.name}</h3>
+                      <p className="mt-2 text-xs text-muted">Full Academic & ERP Tenant Instance</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* 03. User Ecosystem & Access Management */}
+              <section className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-maroon/20 font-mono text-xs font-bold text-maroon-bright">03</span>
+                  <h2 className="font-display text-2xl font-bold text-cream">User Ecosystem & Access Management (8 Tiers)</h2>
+                </div>
+                <p className="text-base text-muted">
+                  Engineered around a granular role-based access control (RBAC) matrix ensuring every user tier accesses modules strictly aligned with their institutional responsibilities.
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {project.userEcosystem?.map((user) => (
+                    <div key={user.role} className="glass flex flex-col justify-between rounded-2xl p-5">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-maroon-bright" />
+                          <h3 className="font-display text-sm font-bold text-cream">{user.role}</h3>
+                        </div>
+                        <ul className="mt-3 space-y-1.5 text-xs text-muted">
+                          {user.points.map((pt, idx) => (
+                            <li key={idx} className="flex items-start gap-1.5">
+                              <span className="mt-1 h-1 w-1 rounded-full bg-maroon-bright shrink-0" />
+                              <span>{pt}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* 04. Core Modules */}
+              <section className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-maroon/20 font-mono text-xs font-bold text-maroon-bright">04</span>
+                  <h2 className="font-display text-2xl font-bold text-cream">Core Modules</h2>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {project.modulesList?.map((mod) => (
+                    <div key={mod.title} className="glass rounded-2xl p-6">
+                      <div className="flex items-center gap-2.5">
+                        <Layers className="h-5 w-5 text-maroon-bright" />
+                        <h3 className="font-display text-base font-bold text-cream">{mod.title}</h3>
+                      </div>
+                      <p className="mt-3 text-xs sm:text-sm leading-relaxed text-muted">
+                        {mod.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* 05. Academic 2.1 – Academic Workflow Engineering */}
+              <section className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-maroon/20 font-mono text-xs font-bold text-maroon-bright">05</span>
+                  <h2 className="font-display text-2xl font-bold text-cream">Academic 2.1 – Workflow Engineering</h2>
+                </div>
+                <p className="text-base text-muted">
+                  Academic 2.1 represents the complete redesign of IDCS assessment workflows. It replaces hardcoded evaluation logic with configuration-driven patterns supporting diverse institutional curriculum structures.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {project.academicEngineeringFeatures?.map((feat, i) => (
+                    <div key={i} className="glass flex items-start gap-3 rounded-xl p-4">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-maroon-bright" />
+                      <span className="text-sm text-cream/90">{feat}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* 06. Technical Architecture */}
+              <section className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-maroon/20 font-mono text-xs font-bold text-maroon-bright">06</span>
+                  <h2 className="font-display text-2xl font-bold text-cream">Technical Architecture & Stack</h2>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="glass rounded-xl p-5">
+                    <Cpu className="h-5 w-5 text-maroon-bright mb-2" />
+                    <span className="text-xs font-semibold uppercase text-muted">Frontend</span>
+                    <p className="mt-1 font-display font-bold text-cream">React & TypeScript</p>
+                    <p className="mt-1 text-xs text-muted">Tailwind CSS & Modular UI</p>
+                  </div>
+                  <div className="glass rounded-xl p-5">
+                    <Server className="h-5 w-5 text-maroon-bright mb-2" />
+                    <span className="text-xs font-semibold uppercase text-muted">Backend</span>
+                    <p className="mt-1 font-display font-bold text-cream">Python & Django</p>
+                    <p className="mt-1 text-xs text-muted">REST API & Service Architecture</p>
+                  </div>
+                  <div className="glass rounded-xl p-5">
+                    <Database className="h-5 w-5 text-maroon-bright mb-2" />
+                    <span className="text-xs font-semibold uppercase text-muted">Database</span>
+                    <p className="mt-1 font-display font-bold text-cream">PostgreSQL</p>
+                    <p className="mt-1 text-xs text-muted">Multi-tenant relational schemas</p>
+                  </div>
+                  <div className="glass rounded-xl p-5">
+                    <Network className="h-5 w-5 text-maroon-bright mb-2" />
+                    <span className="text-xs font-semibold uppercase text-muted">Secure Networking</span>
+                    <p className="mt-1 font-display font-bold text-cream">Cloudflare Tunnel</p>
+                    <p className="mt-1 text-xs text-muted">Zero-inbound port exposure</p>
+                  </div>
+                </div>
+              </section>
+
+              {/* 07. IDCS KeyLite */}
+              <section className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-maroon/20 font-mono text-xs font-bold text-maroon-bright">07</span>
+                  <h2 className="font-display text-2xl font-bold text-cream">IDCS KeyLite – Distributed Hosting Infrastructure</h2>
+                </div>
+                <p className="text-base text-muted">
+                  IDCS KeyLite is an on-premise infrastructure component that empowers institutions to host their own database and application nodes locally while remaining securely connected to the central IDCS cloud via encrypted Cloudflare Tunnels.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {project.keyLiteCapabilities?.map((cap, i) => (
+                    <div key={i} className="glass flex items-start gap-3 rounded-xl p-4">
+                      <Terminal className="mt-0.5 h-4 w-4 shrink-0 text-maroon-bright" />
+                      <span className="text-xs sm:text-sm text-[#d0c6cd]">{cap}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* 08. Infrastructure & Deployment Workflow */}
+              <section className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-maroon/20 font-mono text-xs font-bold text-maroon-bright">08</span>
+                  <h2 className="font-display text-2xl font-bold text-cream">Infrastructure & Deployment Workflow (10 Steps)</h2>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {project.deploymentWorkflow?.map((step, idx) => (
+                    <div key={idx} className="glass flex items-center gap-3.5 rounded-xl p-4">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-maroon-bright/40 bg-maroon-bright/10 font-mono text-xs font-bold text-maroon-bright">
+                        {idx + 1}
+                      </span>
+                      <span className="text-xs sm:text-sm text-cream/90">{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* 09. My Role – Core Architect */}
+              <section className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-maroon/20 font-mono text-xs font-bold text-maroon-bright">09</span>
+                  <h2 className="font-display text-2xl font-bold text-cream">My Role – Core Architect (Rohit SK)</h2>
+                </div>
+                <div className="glass rounded-3xl p-8 border-l-4 border-l-maroon-bright space-y-6">
+                  <div>
+                    <h3 className="font-display text-xl font-bold text-cream">{project.coreArchitect}</h3>
+                    <p className="text-sm font-medium text-maroon-bright">{project.role}</p>
+                  </div>
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted">Architectural Responsibilities</h4>
+                    <ul className="grid gap-2 sm:grid-cols-2 text-xs sm:text-sm text-muted">
+                      {project.architectResponsibilities?.map((resp, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-maroon-bright" />
+                          <span>{resp}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="border-t border-line pt-4">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted">Engineering Focus</h4>
+                    <p className="mt-1 text-sm leading-relaxed text-[#d0c6cd]">
+                      {project.engineeringFocus}
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* 10. Engineering Challenges & Solutions Table */}
+              <section className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-maroon/20 font-mono text-xs font-bold text-maroon-bright">10</span>
+                  <h2 className="font-display text-2xl font-bold text-cream">Engineering Challenges & Solutions</h2>
+                </div>
+                <div className="overflow-x-auto rounded-2xl border border-line bg-card/60">
+                  <table className="w-full text-left text-xs sm:text-sm">
+                    <thead className="border-b border-line bg-card-elevated text-xs font-semibold uppercase tracking-wider text-muted">
+                      <tr>
+                        <th className="px-6 py-4">Challenge</th>
+                        <th className="px-6 py-4">Architectural Solution</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-line/60">
+                      {project.challengesTable?.map((item, idx) => (
+                        <tr key={idx} className="transition hover:bg-white/[0.02]">
+                          <td className="px-6 py-4 font-medium text-cream">{item.challenge}</td>
+                          <td className="px-6 py-4 text-muted">{item.solution}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              {/* 11. Project Vision */}
+              <section className="space-y-4 rounded-3xl border border-maroon-bright/30 bg-gradient-to-r from-maroon/20 via-card to-card p-8">
+                <div className="flex items-center gap-2">
+                  <h2 className="font-display text-xl font-bold text-cream">11. Project Vision</h2>
+                </div>
+                <p className="text-sm sm:text-base leading-relaxed text-[#d0c6cd]">
+                  {project.projectVision}
+                </p>
+              </section>
+            </div>
+          ) : (
+            /* Standard Project Layout for other projects */
+            <>
+              {/* Overview */}
+              <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.6 }}
+                className="mt-14 max-w-3xl"
               >
-                <Github className="h-4 w-4" />
-                GitHub
-              </a>
-            ) : (
-              <span className="inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-muted/60">
-                <Github className="h-4 w-4" />
-                Source — private
-              </span>
-            )}
-            {project.demo ? (
-              <a
-                href={project.demo}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-maroon-bright px-5 py-2.5 text-sm font-semibold text-white shadow-glow-sm transition hover:shadow-glow"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Live Demo
-              </a>
-            ) : (
-              <span className="inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-muted/60">
-                <ExternalLink className="h-4 w-4" />
-                Demo — not yet public
-              </span>
-            )}
-          </div>
-        </motion.header>
+                <h2 className="font-display text-2xl font-bold text-cream">Overview</h2>
+                <p className="mt-4 text-base leading-relaxed text-muted sm:text-lg">
+                  {project.overview}
+                </p>
+              </motion.section>
 
-        {/* Cover */}
-        <motion.div
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.15 }}
-          className="mt-10 overflow-hidden rounded-3xl border border-line"
-        >
-          <ProjectCover project={project} className="aspect-[16/9] w-full" />
-        </motion.div>
+              {/* Problem / Solution */}
+              <div className="mt-10 grid gap-5 lg:grid-cols-2">
+                <InfoBlock icon={Target} title="Problem Statement">
+                  {project.problem}
+                </InfoBlock>
+                <InfoBlock icon={Lightbulb} title="Proposed Solution" delay={0.1}>
+                  {project.solution}
+                </InfoBlock>
+              </div>
 
-        {/* Overview */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6 }}
-          className="mt-14 max-w-3xl"
-        >
-          <h2 className="font-display text-2xl font-bold text-cream">Overview</h2>
-          <p className="mt-4 text-base leading-relaxed text-muted sm:text-lg">
-            {project.overview}
-          </p>
-        </motion.section>
+              {/* Features + contribution */}
+              <div className="mt-10 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+                <InfoBlock icon={ListChecks} title="Key Features">
+                  <ul className="grid gap-2.5 sm:grid-cols-2">
+                    {project.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-2">
+                        <CheckCircle2
+                          className="mt-0.5 h-4 w-4 shrink-0 text-maroon-bright"
+                          aria-hidden="true"
+                        />
+                        <span className="text-muted">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </InfoBlock>
 
-        {/* Problem / Solution */}
-        <div className="mt-10 grid gap-5 lg:grid-cols-2">
-          <InfoBlock icon={Target} title="Problem Statement">
-            {project.problem}
-          </InfoBlock>
-          <InfoBlock icon={Lightbulb} title="Proposed Solution" delay={0.1}>
-            {project.solution}
-          </InfoBlock>
-        </div>
+                <InfoBlock icon={User} title="My Contribution" delay={0.1}>
+                  {project.contribution}
+                </InfoBlock>
+              </div>
+            </>
+          )}
 
-        {/* Features + contribution */}
-        <div className="mt-10 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
-          <InfoBlock icon={ListChecks} title="Key Features">
-            <ul className="grid gap-2.5 sm:grid-cols-2">
-              {project.features.map((feature) => (
-                <li key={feature} className="flex items-start gap-2">
-                  <CheckCircle2
-                    className="mt-0.5 h-4 w-4 shrink-0 text-maroon-bright"
-                    aria-hidden="true"
-                  />
-                  <span className="text-muted">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </InfoBlock>
-
-          <InfoBlock icon={User} title="My Contribution" delay={0.1}>
-            {project.contribution}
-          </InfoBlock>
-        </div>
-
-        {/* Challenges */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6 }}
-          className="mt-10"
-        >
-          <div className="glass rounded-2xl p-6">
-            <h3 className="flex items-center gap-2.5 font-display text-base font-semibold text-cream">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-maroon/40 bg-maroon/10">
-                <Wrench className="h-[18px] w-[18px] text-maroon-bright" aria-hidden="true" />
-              </span>
-              Development Challenges
-            </h3>
-            <ol className="mt-5 grid gap-3 sm:grid-cols-2">
-              {project.challenges.map((challenge, i) => (
-                <li key={challenge} className="flex items-start gap-3">
-                  <span
-                    className="mt-0.5 font-display text-sm font-bold text-maroon-bright"
-                    aria-hidden="true"
-                  >
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span className="text-sm leading-relaxed text-muted">
-                    {challenge}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </motion.section>
-
-        {/* Technologies */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6 }}
-          className="mt-10"
-        >
-          <h2 className="font-display text-2xl font-bold text-cream">
-            Technologies Used
-          </h2>
-          <div className="mt-4 flex flex-wrap gap-2.5">
-            {project.technologies.map((tech) => (
-              <span
-                key={tech}
-                className="rounded-full border border-line bg-card px-4 py-2 text-sm text-muted transition hover:border-maroon-bright/50 hover:text-cream"
-              >
-                {tech}
-              </span>
-            ))}
-          </div>
-        </motion.section>
-
-        {/* Screenshots gallery */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6 }}
-          className="mt-14"
-        >
-          <h2 className="font-display text-2xl font-bold text-cream">
-            Gallery
-          </h2>
-          <p className="mt-2 text-sm text-muted">
-            Click a card to open the full-screen viewer.
-          </p>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {project.screenshots.map((shot, i) => (
-              <button
-                key={shot.title}
-                onClick={() => setLightboxIndex(i)}
-                className="group block overflow-hidden rounded-2xl border border-line text-left transition hover:border-maroon-bright/50"
-                aria-label={`Open ${shot.title} in full screen`}
-              >
-                <ScreenshotArt
-                  screenshot={shot}
-                  accent={project.accent}
-                  title={project.title}
-                  className="aspect-[4/3] w-full transition-transform duration-500 group-hover:scale-[1.03]"
-                />
-              </button>
-            ))}
-          </div>
-        </motion.section>
-
-        {/* Related projects */}
-        {related.length > 0 && (
+          {/* 12. Minimalist Horizontal Line Auto Slideshow Loop (5 Core Screens & Team Group Photo) */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.6 }}
             className="mt-16"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={() => setIsPaused(true)}
+            onTouchEnd={() => setIsPaused(false)}
           >
-            <div className="flex items-center justify-between">
-              <h2 className="font-display text-2xl font-bold text-cream">
-                Related Projects
-              </h2>
-              <Link
-                to="/#projects"
-                className="inline-flex items-center gap-1 text-sm font-semibold text-maroon-bright transition hover:text-cream"
-              >
-                All projects
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="mt-6 grid gap-6 md:grid-cols-2">
-              {related.map((p, i) => (
-                <ProjectCard key={p.id} project={p} index={i} />
-              ))}
-            </div>
-          </motion.section>
-        )}
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-maroon/20 font-mono text-xs font-bold text-maroon-bright">
+                    12
+                  </span>
+                  <h2 className="font-display text-2xl font-bold text-cream">
+                    {isIdcs ? "Project Visual Showcase & Team" : "Gallery"}
+                  </h2>
+                </div>
+                <p className="mt-1 text-xs sm:text-sm text-muted">
+                  Auto-looping horizontal showcase of core platform interfaces and engineering leadership. Click any slide to inspect in full screen.
+                </p>
+              </div>
 
-        {/* Bottom back nav */}
-        <div className="mt-16 flex justify-center border-t border-line pt-10">
-          <button
-            onClick={backToProjects}
-            className="group inline-flex items-center gap-2 text-sm font-semibold text-muted transition hover:text-cream"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            Back to projects
-          </button>
-        </div>
+              {/* Controls: Prev / Next Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => scrollSlider("left")}
+                  aria-label="Previous slide"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card text-muted transition hover:border-maroon-bright/60 hover:text-white active:scale-95"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => scrollSlider("right")}
+                  aria-label="Next slide"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card text-muted transition hover:border-maroon-bright/60 hover:text-white active:scale-95"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Horizontal Line Slideshow Track */}
+            <div
+              ref={sliderRef}
+              className="mt-6 flex gap-5 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory scrollbar-none"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {project.screenshots.map((shot, i) => {
+                const isTeam = shot.filename?.toLowerCase().includes("team");
+                return (
+                  <div
+                    key={shot.title}
+                    className="w-[300px] xs:w-[360px] sm:w-[440px] md:w-[480px] shrink-0 snap-start"
+                  >
+                    <button
+                      onClick={() => setLightboxIndex(i)}
+                      className={`group relative block w-full overflow-hidden rounded-2xl border text-left transition duration-300 hover:-translate-y-1 ${isTeam
+                          ? "border-maroon-bright/60 bg-gradient-to-b from-card-elevated to-card shadow-[0_0_30px_rgba(192,38,85,0.22)] hover:border-maroon-bright"
+                          : "border-line bg-card hover:border-maroon-bright/50"
+                        }`}
+                      aria-label={`View ${shot.title}`}
+                    >
+                      {/* Badge */}
+                      <div className="absolute left-3 top-3 z-10">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider backdrop-blur-md ${isTeam
+                              ? "border border-maroon-bright bg-maroon-bright/90 text-white shadow-glow-sm"
+                              : "border border-white/10 bg-black/70 text-white/90"
+                            }`}
+                        >
+                          {isTeam ? "IQAC Engineering Team" : `Screen 0${i + 1}`}
+                        </span>
+                      </div>
+
+                      <ScreenshotArt
+                        screenshot={shot}
+                        accent={project.accent}
+                        title={project.title}
+                        className="aspect-[16/10] w-full"
+                      />
+
+                          <div className="p-4 sm:p-5">
+                            <h3 className="font-display text-sm sm:text-base font-bold text-cream line-clamp-1 group-hover:text-maroon-bright transition-colors">
+                              {shot.title}
+                            </h3>
+                            {shot.caption && (
+                              <p className="mt-1 text-xs text-muted line-clamp-2 leading-relaxed">
+                                {shot.caption}
+                              </p>
+                            )}
+                          </div>
+                        </button>
+                      </div>
+                      );
+            })}
+                  </div>
+
+                      {/* Slideshow Progress Bar & Jump Dots */}
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          {project.screenshots.map((_, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => scrollToSlide(idx)}
+                              aria-label={`Jump to slide ${idx + 1}`}
+                              className={`h-2 rounded-full transition-all duration-300 ${activeSlide === idx
+                                  ? "w-8 bg-maroon-bright"
+                                  : "w-2 bg-white/20 hover:bg-white/40"
+                                }`}
+                            />
+                          ))}
+                        </div>
+
+                        <div className="flex items-center gap-3 text-xs text-muted">
+                          <span className="flex items-center gap-1.5 font-mono text-[11px]">
+                            <span
+                              className={`h-2 w-2 rounded-full ${isPaused ? "bg-amber-400" : "bg-emerald-400 animate-pulse"
+                                }`}
+                            />
+                            {isPaused ? "Paused on hover" : "Auto loop active"}
+                          </span>
+                          <span className="font-mono text-[11px] text-cream/70">
+                            {activeSlide + 1} / {project.screenshots.length}
+                          </span>
+                        </div>
+                      </div>
+                    </motion.section>
+
+        {/* Related projects */ }
+                  {
+                    related.length > 0 && (
+                      <motion.section
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-60px" }}
+                        transition={{ duration: 0.6 }}
+                        className="mt-16"
+                      >
+                        <div className="flex items-center justify-between">
+                          <h2 className="font-display text-2xl font-bold text-cream">
+                            Related Projects
+                          </h2>
+                          <Link
+                            to="/#projects"
+                            className="inline-flex items-center gap-1 text-sm font-semibold text-maroon-bright transition hover:text-cream"
+                          >
+                            All projects
+                            <ArrowUpRight className="h-4 w-4" />
+                          </Link>
+                        </div>
+                        <div className="mt-6 grid gap-6 md:grid-cols-2">
+                          {related.map((p, i) => (
+                            <ProjectCard key={p.id} project={p} index={i} />
+                          ))}
+                        </div>
+                      </motion.section>
+                    )
+                  }
+
+                  {/* Bottom back nav */ }
+                  <div className="mt-16 flex justify-center border-t border-line pt-10">
+                    <button
+                      onClick={backToProjects}
+                      className="group inline-flex items-center gap-2 text-sm font-semibold text-muted transition hover:text-cream"
+                    >
+                      <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                      Back to projects
+                    </button>
+                  </div>
       </div>
 
-      <Lightbox
-        open={lightboxIndex !== null}
-        items={project.screenshots}
-        index={lightboxIndex ?? 0}
-        accent={project.accent}
-        title={project.title}
-        onClose={() => setLightboxIndex(null)}
-        onNavigate={setLightboxIndex}
-      />
-    </article>
-  );
+            <Lightbox
+              open={lightboxIndex !== null}
+              items={project.screenshots}
+              index={lightboxIndex ?? 0}
+              accent={project.accent}
+              title={project.title}
+              onClose={() => setLightboxIndex(null)}
+              onNavigate={setLightboxIndex}
+            />
+          </article>
+          );
 }

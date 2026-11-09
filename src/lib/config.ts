@@ -26,18 +26,16 @@ export const site = {
   email: "hello@rohitsk.dev",
   phone: null as string | null,
 
-  // TODO: Replace with your real profile URLs.
+  // Real profile URLs.
   socials: {
-    github: "https://github.com/rohitsk",
-    linkedin: "https://www.linkedin.com/in/rohitsk",
+    github: "https://github.com/rohit-al24",
+    linkedin: "https://www.linkedin.com/in/rohit-sk-8302b4315/",
     freelancer: "https://www.freelancer.com/u/rohitsk",
     email: "mailto:hello@rohitsk.dev",
   },
 
   /**
-   * Resume link. Drop a real PDF at `/public/resume.pdf` and this will
-   * become a direct download. Until then the Resume button opens a
-   * printable resume page (`/resume`).
+   * Resume link.
    */
-  resumeUrl: "/resume.pdf",
+  resumeUrl: "/assets/resume/Rohit_SK_Resume (1).pdf",
 };

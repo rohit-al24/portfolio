@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { Navbar } from "@/components/Navbar/Navbar";
@@ -7,6 +7,7 @@ import { Home } from "@/pages/Home";
 import { ProjectPage } from "@/pages/ProjectPage";
 import { Resume } from "@/pages/Resume";
 import { NotFound } from "@/pages/NotFound";
+import { SplashScreen } from "@/components/SplashScreen/SplashScreen";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -18,9 +19,17 @@ function ScrollToTop() {
 
 export default function App() {
   const location = useLocation();
+  const [showSplash, setShowSplash] = useState(true);
 
   return (
     <div className="relative min-h-screen bg-obsidian text-cream">
+      {/* Full-screen Loading Splash Screen */}
+      <AnimatePresence>
+        {showSplash && (
+          <SplashScreen onComplete={() => setShowSplash(false)} />
+        )}
+      </AnimatePresence>
+
       <ScrollToTop />
       <Navbar />
 

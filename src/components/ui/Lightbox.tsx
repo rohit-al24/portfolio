@@ -90,21 +90,35 @@ export function Lightbox({
 
           <motion.div
             key={index}
-            className="relative flex h-full max-h-[80vh] w-full max-w-4xl flex-col"
+            className="relative flex h-full max-h-[88vh] w-full max-w-5xl flex-col items-center justify-center"
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.25 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <ScreenshotArt
-              screenshot={current}
-              accent={accent}
-              title={title}
-              className="min-h-0 flex-1 rounded-2xl border border-line"
-            />
-            <p className="mt-4 text-center text-sm text-muted">
-              {index + 1} / {items.length} — {current?.title}
-            </p>
+            <div className="relative w-full max-h-[75vh] flex items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-black/80 shadow-2xl">
+              <ScreenshotArt
+                screenshot={current}
+                accent={accent}
+                title={title}
+                objectFit="contain"
+                showOverlay={false}
+                className="max-h-[75vh] w-full"
+              />
+            </div>
+            <div className="mt-4 text-center px-4">
+              <p className="font-display text-base sm:text-lg font-bold text-cream">
+                {current?.title}
+              </p>
+              {current?.caption && (
+                <p className="mt-1 text-xs sm:text-sm text-muted max-w-2xl mx-auto leading-relaxed">
+                  {current.caption}
+                </p>
+              )}
+              <span className="mt-2.5 inline-block rounded-full bg-white/5 border border-white/10 px-3 py-1 font-mono text-xs text-maroon-bright">
+                {index + 1} / {items.length}
+              </span>
+            </div>
           </motion.div>
 
           <button

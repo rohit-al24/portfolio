@@ -36,7 +36,7 @@ export function Footer() {
       <div className="container-x py-16">
         <div className="flex flex-col items-center text-center">
           <Link to="/" className="font-display text-2xl font-bold tracking-tight text-cream">
-            ROHIT<span className="text-maroon-bright">.SK</span>
+            ROHIT<span className="text-maroon-bright">SK</span>
           </Link>
           <p className="mt-3 max-w-sm font-serif text-lg italic text-muted">
             “Engineering Ideas Into Intelligent Experiences.”

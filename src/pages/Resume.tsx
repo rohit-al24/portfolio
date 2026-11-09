@@ -18,13 +18,16 @@ export function Resume() {
           <h1 className="font-display text-3xl font-extrabold text-cream">
             Resume
           </h1>
-          <button
-            onClick={() => window.print()}
+          <a
+            href={site.resumeUrl}
+            download="Rohit_SK_Resume.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-full bg-maroon-bright px-6 py-3 text-sm font-semibold text-white shadow-glow-sm transition hover:shadow-glow"
           >
             <Download className="h-4 w-4" />
             Download PDF
-          </button>
+          </a>
         </div>
 
         {/* Printable resume sheet */}

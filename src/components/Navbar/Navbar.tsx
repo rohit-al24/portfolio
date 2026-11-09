@@ -108,7 +108,7 @@ export function Navbar() {
         </ul>
 
         {/* Resume CTA (desktop) */}
-        <div className="hidden lg:block">
+        <div className="hidden lg:flex items-center gap-3">
           <Link
             to="/resume"
             className="inline-flex items-center gap-2 rounded-full border border-maroon-bright/50 bg-maroon/20 px-5 py-2 text-sm font-semibold text-cream transition-all duration-300 hover:bg-maroon-bright hover:shadow-glow-sm"

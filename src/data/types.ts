@@ -33,6 +33,8 @@ export type IconKey =
 export interface ProjectScreenshot {
   title: string;
   caption: string;
+  image?: string;
+  filename?: string;
 }
 
 export interface Project {
@@ -55,6 +57,27 @@ export interface Project {
   demo: string | null;
   screenshots: ProjectScreenshot[];
   related: string[];
+
+  // Enterprise / IDCS case study fields
+  subtitle?: string;
+  organization?: string;
+  coreArchitect?: string;
+  role?: string;
+  projectType?: string;
+  architectureType?: string;
+  idcsLogo?: string;
+  collegeLogo?: string;
+  objectives?: string[];
+  institutions?: { code: string; name: string }[];
+  userEcosystem?: { role: string; points: string[] }[];
+  modulesList?: { title: string; description: string }[];
+  academicEngineeringFeatures?: string[];
+  keyLiteCapabilities?: string[];
+  deploymentWorkflow?: string[];
+  architectResponsibilities?: string[];
+  engineeringFocus?: string;
+  challengesTable?: { challenge: string; solution: string }[];
+  projectVision?: string;
 }
 
 export interface SkillCategory {
