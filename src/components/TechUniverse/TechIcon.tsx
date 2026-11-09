@@ -34,8 +34,9 @@ export function TechIcon({
       onMouseLeave={onHoverEnd}
       onFocus={onHoverStart}
       onBlur={onHoverEnd}
-        isFilteredOut ? "opacity-20 scale-75 blur-[0.5px] pointer-events-none" : "opacity-100 scale-100"
-} `}
+      className={`group absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer focus-visible:outline-none transition-all duration-300 active:scale-90 ${tech.hiddenOnMobile ? "hidden md:block" : "block"
+        } ${isActive ? "tech-icon--active" : ""} ${isPaused ? "pause-animation" : ""} ${isFilteredOut ? "opacity-20 scale-75 blur-[0.5px] pointer-events-none" : "opacity-100 scale-100"
+      } `}
       style={{
         left: `${ currentPosition.x }% `,
         top: `${ currentPosition.y }% `,
@@ -76,11 +77,11 @@ export function TechIcon({
 
   {/* Upgraded Tooltip with Category & Action hint */ }
       <div
-        className={`pointer-events-none absolute left-1/2 top-full mt-2.5 -translate-x-1/2 whitespace-nowrap rounded-2xl border border-white/15 bg-[#0e090d]/95 px-3 py-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.85)] backdrop-blur-md transition-all duration-200 ${
-          isActive
-            ? "opacity-100 scale-100"
-            : "opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 group-focus-visible:opacity-100 group-focus-visible:scale-100"
-        }`}
+        className={`pointer - events - none absolute left - 1 / 2 top - full mt - 2.5 - translate - x - 1 / 2 whitespace - nowrap rounded - 2xl border border - white / 15 bg - [#0e090d] / 95 px - 3 py - 1.5 shadow - [0_10px_30px_rgba(0, 0, 0, 0.85)] backdrop - blur - md transition - all duration - 200 ${
+  isActive
+    ? "opacity-100 scale-100"
+    : "opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 group-focus-visible:opacity-100 group-focus-visible:scale-100"
+} `}
         aria-hidden="true"
       >
         <div className="flex items-center gap-1.5">
@@ -88,7 +89,7 @@ export function TechIcon({
             className="h-2 w-2 rounded-full shrink-0"
             style={{
               background: tech.brandColor,
-              boxShadow: `0 0 8px ${tech.brandColor}`,
+              boxShadow: `0 0 8px ${ tech.brandColor } `,
             }}
           />
           <span className="font-display text-xs font-bold text-cream">
