@@ -21,18 +21,11 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    zoom: 0.9;
   }
 
   body {
     @apply bg-obsidian text-cream font-sans;
     overflow-x: hidden;
-  }
-
-  @media (max-width: 1024px) {
-    html {
-      zoom: 1;
-    }
   }
 
   /* Subtle film grain for a cinematic finish */
@@ -106,7 +99,7 @@
 
   .text-gradient-solid {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(120deg, #c02655, #e087a4);
+    background-image: linear-gradient(135deg, #ff3b6e 0%, #e11d48 50%, #c02655 100%);
   }
 
   /* Hairline top/bottom rule used in section headers */

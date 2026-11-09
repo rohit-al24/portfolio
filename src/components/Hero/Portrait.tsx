@@ -1,70 +1,57 @@
 import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 
 export function Portrait() {
   const [failed, setFailed] = useState(false);
-  const reduced = useReducedMotion();
+
+  if (failed) return null;
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
-      {/* Atmospheric magenta glow behind the cutout */}
-      <div
-        className="absolute right-[-4%] top-[5%] h-[88%] w-[65%]"
-        style={{
-          background:
-            "radial-gradient(ellipse at 58% 48%, rgba(190,15,72,.30) 0%, rgba(120,8,43,.17) 42%, transparent 74%)",
-          filter: "blur(65px)",
-        }}
-      />
+    <>
+      {/* Desktop portrait & background effects from backgroundimage.png */}
+      <div className="pointer-events-none absolute inset-0 z-10 hidden lg:flex items-end justify-end overflow-hidden">
+        <div className="relative mx-auto h-full w-full max-w-[1672px] flex justify-end items-end">
+          <motion.img
+            src="/backgroundimage.png"
+            alt="Portrait of Rohit SK"
+            loading="eager"
+            decoding="async"
+            draggable={false}
+            onError={() => setFailed(true)}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="h-full w-auto max-w-none object-contain object-right-bottom select-none"
+            style={{
+              filter: "drop-shadow(-20px 0px 50px rgba(192, 38, 85, 0.2))",
+            }}
+          />
+        </div>
+      </div>
 
-      {/* Gentle animated face / shoulder light */}
-      <motion.div
-        className="absolute right-[9%] top-[10%] h-[68%] w-[46%]"
-        style={{
-          background:
-            "radial-gradient(ellipse, rgba(255,105,155,.13), rgba(190,20,75,.06) 45%, transparent 72%)",
-          filter: "blur(45px)",
-        }}
-        animate={reduced ? undefined : { opacity: [0.65, 1, 0.65] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      {!failed && (
+      {/* Mobile view: display Rohit proudly without shrinking */}
+      <div className="pointer-events-none absolute inset-0 z-10 block lg:hidden overflow-hidden">
         <motion.img
-          src="/assets/galaxy/me.png"
+          src="/backgroundimage.png"
           alt="Portrait of Rohit SK"
           loading="eager"
           decoding="async"
           draggable={false}
           onError={() => setFailed(true)}
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="
-  absolute bottom-[-1%] right-[-4%]
-  h-[90%] w-auto max-w-none
-  object-contain object-right-bottom
-  max-md:right-[-8%]
-  max-md:h-[74%]
-  max-sm:right-[-14%]
-  max-sm:h-[62%]
-"
-          style={{
-  maxHeight: "100%",
-  maxWidth: "none",
-  filter:
-    "brightness(0.94) contrast(1.12) saturate(0.98) drop-shadow(-25px 0px 65px rgba(164,20,67,0.18))",
-  transformOrigin: "right bottom",
-}}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          className="h-full w-full object-cover object-[78%_25%] select-none"
         />
-      )}
-
-      {/* Blend the lower edge naturally into the hero background */}
-      <div
-        className="absolute bottom-0 right-0 z-[3] h-[12%] w-[62%]"
-        style={{
-          background: "linear-gradient(to top, rgba(9,5,9,.22), transparent)",
-        }}
-      />
-    </div>
+        {/* Soft dark vignette overlay on mobile to keep typography crystal clear */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(9,5,9,0.3) 0%, rgba(9,5,9,0.65) 42%, rgba(9,5,9,0.92) 75%, #090509 100%)",
+          }}
+        />
+      </div>
+    </>
   );
 }

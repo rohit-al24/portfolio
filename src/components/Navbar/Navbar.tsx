@@ -68,13 +68,13 @@ export function Navbar() {
         <Link
           to="/"
           className="font-display text-lg font-bold tracking-tight text-cream"
-          aria-label="ROHIT.SK — home"
+          aria-label="ROHITSK — home"
           onClick={() => {
             setOpen(false);
             if (location.pathname === "/") window.scrollTo({ top: 0, behavior: "smooth" });
           }}
         >
-          ROHIT<span className="text-maroon-bright">.SK</span>
+          ROHIT<span className="text-maroon-bright">SK</span>
         </Link>
 
         {/* Desktop links */}
